@@ -1,0 +1,2 @@
+# StereoSLAM
+Stereo SLAM implementation
