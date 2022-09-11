@@ -1,3 +1,0 @@
-/home/nate/Development/StereoSLAM/build/CMakeFiles/rebuild_cache.dir
-/home/nate/Development/StereoSLAM/build/CMakeFiles/edit_cache.dir
-/home/nate/Development/StereoSLAM/build/CMakeFiles/stereoSLAM.dir
