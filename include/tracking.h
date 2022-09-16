@@ -4,6 +4,7 @@
 #include "stereoCamera.h"
 #include "keyframe.h"
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/features2d.hpp>
 
 struct PoseGraph
 {

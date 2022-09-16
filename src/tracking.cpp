@@ -10,54 +10,56 @@ void TrackPose(StereoCamera &stereo_cam)
         cv::Mat img1 = cv::imread(stereo_cam.imgStream.left_images[i]);
         cv::Mat img2 = cv::imread(stereo_cam.imgStream.right_images[i]);
 
-        std::vector<cv::KeyPoint> keypoints_1, keypoints_2;
+        std::vector<cv::KeyPoint> keypoints1, keypoints2;
+        cv::Mat descriptors1, descriptors2;
 
-        cv::Mat descriptors_1, descriptors_2;
-        cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
-        cv::Ptr<cv::DescriptorExtractor> descriptor = cv::ORB::create();
-
+        cv::Ptr<cv::Feature2D> detector = cv::ORB::create();
         cv::Ptr<cv::DescriptorMatcher> matcher  = cv::DescriptorMatcher::create ( "BruteForce-Hamming" );
 
-        detector->detect ( img1, keypoints_1 );
-        detector->detect ( img2, keypoints_2 );
+        detector->detectAndCompute(img1, cv::noArray(), keypoints1, descriptors1);
+        detector->detectAndCompute(img2, cv::noArray(), keypoints2, descriptors2);
 
-        descriptor->compute ( img1, keypoints_1, descriptors_1 );
-        descriptor->compute ( img2, keypoints_2, descriptors_2 );
 
-        cv::Mat outimg1;
-        drawKeypoints( img1, keypoints_1, outimg1, cv::Scalar::all(-1), cv::DrawMatchesFlags::DEFAULT );
-        imshow("ORB Keypoints",outimg1);
+        std::vector<std::vector<cv::DMatch>> rawMatches;
+        std::vector<cv::DMatch> knnMatches;
+        std::vector<cv::Point2f> p1, p2;
+        std::vector<float> distances;
+        matcher->knnMatch(descriptors1, descriptors2, rawMatches, 2);
+        
+        //matcher->match ( descriptors_1, descriptors_2, matches );
 
-        std::vector<cv::DMatch> matches;
-        matcher->match ( descriptors_1, descriptors_2, matches );
-
-        double min_dist=10000, max_dist=0;
-
-        for ( int i = 0; i < descriptors_1.rows; i++ )
+        for (size_t i = 0; i < rawMatches.size(); i++)
         {
-            double dist = matches[i].distance;
-            if ( dist < min_dist ) min_dist = dist;
-            if ( dist > max_dist ) max_dist = dist;
-        }
-
-        printf ( "-- Max dist : %f \n", max_dist );
-        printf ( "-- Min dist : %f \n", min_dist );
-
-        std::vector< cv::DMatch > good_matches;
-        for ( int i = 0; i < descriptors_1.rows; i++ )
-        {
-            if ( matches[i].distance <= std::max ( 2*min_dist, 30.0 ) )
+            const std::vector<cv::DMatch>& m = rawMatches[i];
+            if (m[0].distance < m[1].distance * 0.5)
             {
-                good_matches.push_back ( matches[i] );
+                p2.push_back(keypoints2[m[0].queryIdx].pt);
+                p1.push_back(keypoints1[m[0].trainIdx].pt);
+                knnMatches.push_back(m[0]);
+            }
+        }
+        //std::vector<std::pair<cv::Point2f, cv::Point2f> > pointPairs;
+        std::vector<uchar> status;
+        // IGNORE RANSAC TIS SHEEET
+        cv::Mat H = cv::findHomography(p2, p1, status, cv::RANSAC, 100.0);
+        std::vector<cv::DMatch> finalMatches;
+        int inliers = 0;
+        for (size_t i = 0; i < status.size(); i++)
+        {
+            if (status[i])
+            {
+                //pointPairs.push_back(std::make_pair(kp1[i], kp2[i]));
+                finalMatches.push_back(knnMatches[i]);
+
             }
         }
 
         cv::Mat img_match;
         cv::Mat img_goodmatch;
-        drawMatches ( img1, keypoints_1, img2, keypoints_2, matches, img_match );
-        drawMatches ( img1, keypoints_1, img2, keypoints_2, good_matches, img_goodmatch );
-        imshow ( "All Matches", img_match );
-        imshow ( "Good Matches", img_goodmatch );
+        drawMatches ( img1, keypoints1, img2, keypoints2, knnMatches, img_match );
+        drawMatches ( img1, keypoints1, img2, keypoints2, finalMatches, img_goodmatch );
+        imshow ( "KNN Matches", img_match );
+        imshow ( "KNN + RANSAC Matches", img_goodmatch );
         cv::waitKey(0);
         // get pose from previous keyframe
     }
