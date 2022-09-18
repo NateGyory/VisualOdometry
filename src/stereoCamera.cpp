@@ -1,4 +1,5 @@
 #include "stereoCamera.h"
+#include <iostream> // !!! Deleteme
 
 void InitStereoCamera(StereoCamera &stereo_cam)
 {
@@ -26,14 +27,15 @@ void InitStereoCamera(StereoCamera &stereo_cam)
     fs["LEFT_BASE_TF"] >> R_Lcam_B;
     fs["RIGHT_BASE_TF"] >> R_Rcam_B;
 
-    R_B_Rcam = R_Rcam_B.inv();
-    R_Lcam_Rcam = R_B_Rcam * R_Lcam_B;
-    R_Lcam_Rcam.convertTo(R_L_R, CV_64F);
+    R_B_Rcam = R_Rcam_B.inv(); R_Lcam_Rcam = R_B_Rcam * R_Lcam_B; R_Lcam_Rcam.convertTo(R_L_R, CV_64F);
+
 
     // Temp output mats
     cv::Mat R1, R2, P1, P2;
 
     cv::stereoRectify(stereo_cam.L_cam.K, stereo_cam.L_cam.D, stereo_cam.R_cam.K, stereo_cam.R_cam.D, stereo_cam.imageSize, R_L_R.rowRange(0,3).colRange(0,3), R_L_R.rowRange(0,3).col(3), R1, R2, P1, P2, stereo_cam.Q);
+
+    stereo_cam.BF = abs(P2.at<double>(0,3));
 
     cv::initUndistortRectifyMap(stereo_cam.L_cam.K, stereo_cam.L_cam.D, stereo_cam.L_cam.R,
                                 stereo_cam.L_cam.P.rowRange(0,3).colRange(0,3), stereo_cam.imageSize,

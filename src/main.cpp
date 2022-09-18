@@ -10,9 +10,6 @@
 //#include <pcl/filters/statistical_outlier_removal.h>
 //#include <pcl/filters/voxel_grid.h>
 
-#include "stereoCamera.h"
-#include "tracking.h"
-
 //void GeneratePointCloud(StereoCamera &stereo_cam)
 //{
 //    cv::Ptr<cv::StereoBM> block_matcher = cv::StereoBM::create();
@@ -74,6 +71,10 @@
 //
 //    }
 //}
+
+#include "stereoCamera.h"
+#include "tracking.h"
+
 
 int main()
 {

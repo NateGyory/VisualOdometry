@@ -3,6 +3,7 @@
 
 #include "opencv2/core.hpp"
 #include <opencv2/calib3d.hpp>
+#include <opencv2/core/matx.hpp>
 
 #include <string>
 #include <vector>
@@ -31,6 +32,7 @@ struct StereoCamera
     CameraParams L_cam, R_cam; // Left and right cameras
     cv::Mat Q; // 4x4 disparity-depth matrix
     cv::Size2i imageSize;
+    double BF; // Baseline times focal length
 };
 
 void GetImages(ImageStream &imgStream);
