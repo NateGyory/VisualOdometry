@@ -23,7 +23,7 @@ LEFT.P:  !!opencv-matrix
    dt: d
    data: [435.2046959714599, 0, 367.4517211914062, 0,  0, 435.2046959714599, 252.2008514404297, 0,  0, 0, 1, 0]
 
-LEFT_BASE_TF: !!opencv-matrix
+T_B_LEFT: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d
@@ -55,7 +55,7 @@ RIGHT.P:  !!opencv-matrix
    dt: d
    data: [435.2046959714599, 0, 367.4517211914062, -47.90639384423901, 0, 435.2046959714599, 252.2008514404297, 0, 0, 0, 1, 0]
 
-RIGHT_BASE_TF: !!opencv-matrix
+T_B_RIGHT: !!opencv-matrix
   rows: 4
   cols: 4
   dt: d

@@ -32,7 +32,7 @@ struct StereoCamera
     CameraParams L_cam, R_cam; // Left and right cameras
     cv::Mat Q; // 4x4 disparity-depth matrix
     cv::Size2i imageSize;
-    double BF; // Baseline times focal length
+    double B; // Baseline
 };
 
 void GetImages(ImageStream &imgStream);
