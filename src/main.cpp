@@ -74,10 +74,13 @@
 
 #include "stereoCamera.h"
 #include "tracking.h"
+#include "ros/ros.h"
 
 
-int main()
+int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "DronePose");
+
     StereoCamera stereo_cam;
 
     InitStereoCamera(stereo_cam);

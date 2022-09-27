@@ -4,6 +4,8 @@
 #include "Eigen/Core"
 #include <pangolin/pangolin.h>
 #include <unistd.h>
+#include "ros/ros.h"
+#include "geometry_msgs/Pose.h"
 
 cv::Mat rotation(3, 3, CV_64F);
 cv::Point3f translation(0.0f, 0.0f, 0.0f);
@@ -101,6 +103,11 @@ void computePointcloud(StereoCamera &stereo_cam, cv::Mat disparity, const cv::Ma
 
 void TrackPose(StereoCamera &stereo_cam)
 {
+
+    ros::NodeHandle n;
+
+    ros::Publisher pose_pub = n.advertise<geometry_msgs::Pose>("Pose", 1000);
+
     // Get initial image, undistort and rectify
     std::string Limgf = stereo_cam.imgStream.left_images[0];
     std::string Rimgf = stereo_cam.imgStream.right_images[0];
@@ -192,7 +199,23 @@ void TrackPose(StereoCamera &stereo_cam)
 
             T_Init_Current = T_Init_Current * T_Prev_Cur;
             //cv::solvePnPRefineLM(points3D, points2D, stereo_cam.L_cam.K, stereo_cam.L_cam.D, rVec, tVec);
+
+
+            // Create the Pose
+            double x = T_Init_Current.at<double>(0,3);
+            double y = T_Init_Current.at<double>(1,3);
+            double z = T_Init_Current.at<double>(2,3);
+            geometry_msgs::Pose pose;
+            geometry_msgs::Point point;
+            point.x = x;
+            point.y = y;
+            point.z = z;
+            geometry_msgs::Quaternion quat;
+            pose.position = point;
+            pose.orientation = quat;
+            pose_pub.publish(pose);
         }
+
 
         // Apply the rotation and translation to the global pose
 
