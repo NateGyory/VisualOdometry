@@ -2,10 +2,15 @@
 #include <iostream> // !!! Deleteme
 #include <string>
 #include "Eigen/Core"
-#include <pangolin/pangolin.h>
+//#include <pangolin/pangolin.h>
 #include <unistd.h>
 #include "ros/ros.h"
 #include "geometry_msgs/Pose.h"
+#include "geometry_msgs/PoseStamped.h"
+#include "std_msgs/Header.h"
+#include <opencv2/core/eigen.hpp>
+#include <Eigen/Geometry>
+#include <ros/time.h>
 
 cv::Mat rotation(3, 3, CV_64F);
 cv::Point3f translation(0.0f, 0.0f, 0.0f);
@@ -16,45 +21,45 @@ cv::Ptr<cv::StereoSGBM> sgbm = cv::StereoSGBM::create(
 cv::Ptr<cv::Feature2D> detector = cv::ORB::create();
 cv::Ptr<cv::DescriptorMatcher> matcher  = cv::DescriptorMatcher::create ( "BruteForce-Hamming" );
 
-void showPointCloud(const std::vector<Eigen::Vector4d, Eigen::aligned_allocator<Eigen::Vector4d>> &pointcloud) {
-
-    if (pointcloud.empty()) {
-        std::cerr << "Point cloud is empty!" << std::endl;
-        return;
-    }
-
-    pangolin::CreateWindowAndBind("Point Cloud Viewer", 1024, 768);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    pangolin::OpenGlRenderState s_cam(
-        pangolin::ProjectionMatrix(1024, 768, 500, 500, 512, 389, 0.1, 1000),
-        pangolin::ModelViewLookAt(0, -0.1, -1.8, 0, 0, 0, 0.0, -1.0, 0.0)
-    );
-
-    pangolin::View &d_cam = pangolin::CreateDisplay()
-        .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
-        .SetHandler(new pangolin::Handler3D(s_cam));
-
-    while (pangolin::ShouldQuit() == false) {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        d_cam.Activate(s_cam);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-        glPointSize(2);
-        glBegin(GL_POINTS);
-        for (auto &p: pointcloud) {
-            glColor3f(p[3], p[3], p[3]);
-            glVertex3d(p[0], p[1], p[2]);
-        }
-        glEnd();
-        pangolin::FinishFrame();
-        usleep(5000);   // sleep 5 ms
-    }
-    return;
-}
+//void showPointCloud(const std::vector<Eigen::Vector4d, Eigen::aligned_allocator<Eigen::Vector4d>> &pointcloud) {
+//
+//    if (pointcloud.empty()) {
+//        std::cerr << "Point cloud is empty!" << std::endl;
+//        return;
+//    }
+//
+//    pangolin::CreateWindowAndBind("Point Cloud Viewer", 1024, 768);
+//    glEnable(GL_DEPTH_TEST);
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//
+//    pangolin::OpenGlRenderState s_cam(
+//        pangolin::ProjectionMatrix(1024, 768, 500, 500, 512, 389, 0.1, 1000),
+//        pangolin::ModelViewLookAt(0, -0.1, -1.8, 0, 0, 0, 0.0, -1.0, 0.0)
+//    );
+//
+//    pangolin::View &d_cam = pangolin::CreateDisplay()
+//        .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
+//        .SetHandler(new pangolin::Handler3D(s_cam));
+//
+//    while (pangolin::ShouldQuit() == false) {
+//        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//        d_cam.Activate(s_cam);
+//        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+//
+//        glPointSize(2);
+//        glBegin(GL_POINTS);
+//        for (auto &p: pointcloud) {
+//            glColor3f(p[3], p[3], p[3]);
+//            glVertex3d(p[0], p[1], p[2]);
+//        }
+//        glEnd();
+//        pangolin::FinishFrame();
+//        usleep(5000);   // sleep 5 ms
+//    }
+//    return;
+//}
 
 void undistortRectifyStereoPair(StereoCamera &stereo_cam, std::string Limgf, std::string Rimgf, cv::Mat &imgL, cv::Mat &imgR)
 {
@@ -104,9 +109,12 @@ void computePointcloud(StereoCamera &stereo_cam, cv::Mat disparity, const cv::Ma
 void TrackPose(StereoCamera &stereo_cam)
 {
 
+    unsigned int seq = 0;
+    std::string frame_id = "map";
     ros::NodeHandle n;
+    ros::Time time;
 
-    ros::Publisher pose_pub = n.advertise<geometry_msgs::Pose>("Pose", 1000);
+    ros::Publisher pose_pub = n.advertise<geometry_msgs::PoseStamped>("Pose", 1000);
 
     // Get initial image, undistort and rectify
     std::string Limgf = stereo_cam.imgStream.left_images[0];
@@ -181,6 +189,25 @@ void TrackPose(StereoCamera &stereo_cam)
             points2D.emplace_back(x_current, y_current);
         }
 
+        cv::imshow("Current frame", current_imgL);
+        cv::waitKey(1);
+
+        prev_imgL.release();
+        prev_imgR.release();
+        prev_keypoints.clear();
+        prev_descriptors.release();
+        prev_imgL = current_imgL;
+        prev_imgR = current_imgR;
+        prev_keypoints = current_keypoints;
+        prev_descriptors = current_descriptors;
+        current_imgL.release();
+        current_imgR.release();
+        current_keypoints.clear();
+        current_descriptors.release();
+        knnMatches.clear();
+        disparity.release();
+
+        computeDisparityNew(stereo_cam, prev_imgL, prev_imgR, disparity);
 
         // SolvePnP to get the Homogeneous transform
         cv::Mat rVec, tVec;
@@ -200,20 +227,44 @@ void TrackPose(StereoCamera &stereo_cam)
             T_Init_Current = T_Init_Current * T_Prev_Cur;
             //cv::solvePnPRefineLM(points3D, points2D, stereo_cam.L_cam.K, stereo_cam.L_cam.D, rVec, tVec);
 
-
             // Create the Pose
+            std_msgs::Header header;
+            header.seq = seq++;
+            header.stamp = time.now();
+            header.frame_id = frame_id;
+
+            Eigen::Matrix3d rot(3, 3);
+            rot(0,0) = T_Init_Current.at<double>(0,0);
+            rot(0,1) = T_Init_Current.at<double>(0,1);
+            rot(0,2) = T_Init_Current.at<double>(0,2);
+            rot(1,0) = T_Init_Current.at<double>(1,0);
+            rot(1,1) = T_Init_Current.at<double>(1,1);
+            rot(1,2) = T_Init_Current.at<double>(1,2);
+            rot(2,0) = T_Init_Current.at<double>(2,0);
+            rot(2,1) = T_Init_Current.at<double>(2,1);
+            rot(2,2) = T_Init_Current.at<double>(2,2);
+            //cv::cv2eigen(T_Init_Current, rot);
+            Eigen::Quaterniond quat(rot);
+
             double x = T_Init_Current.at<double>(0,3);
             double y = T_Init_Current.at<double>(1,3);
             double z = T_Init_Current.at<double>(2,3);
+            geometry_msgs::PoseStamped poseStamped;
             geometry_msgs::Pose pose;
             geometry_msgs::Point point;
             point.x = x;
             point.y = y;
             point.z = z;
-            geometry_msgs::Quaternion quat;
+            geometry_msgs::Quaternion ros_quat;
+            ros_quat.x = quat.x();
+            ros_quat.y = quat.y();
+            ros_quat.z = quat.z();
+            ros_quat.w = quat.w();
             pose.position = point;
-            pose.orientation = quat;
-            pose_pub.publish(pose);
+            pose.orientation = ros_quat;
+            poseStamped.header = header;
+            poseStamped.pose = pose;
+            pose_pub.publish(poseStamped);
         }
 
 
@@ -229,23 +280,8 @@ void TrackPose(StereoCamera &stereo_cam)
 //        cv::waitKey(0);
 
         // Set prev data to current to process next frame
-        prev_imgL.release();
-        prev_imgR.release();
-        prev_keypoints.clear();
-        prev_descriptors.release();
-        prev_imgL = current_imgL;
-        prev_imgR = current_imgR;
-        prev_keypoints = current_keypoints;
-        prev_descriptors = current_descriptors;
-        current_imgL.release();
-        current_imgR.release();
-        current_keypoints.clear();
-        current_descriptors.release();
-        knnMatches.clear();
-        disparity.release();
 
         // Need to compute the new disparity
-        computeDisparityNew(stereo_cam, prev_imgL, prev_imgR, disparity);
 
     }
     std::cout << "Current translation" << std::endl;
