@@ -7,6 +7,8 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Pose.h"
 #include "geometry_msgs/PoseStamped.h"
+#include "visualization_msgs/Marker.h"
+#include "nav_msgs/Path.h"
 #include "std_msgs/Header.h"
 #include <opencv2/core/eigen.hpp>
 #include <Eigen/Geometry>
@@ -115,6 +117,11 @@ void TrackPose(StereoCamera &stereo_cam)
     ros::Time time;
 
     ros::Publisher pose_pub = n.advertise<geometry_msgs::PoseStamped>("Pose", 1000);
+    ros::Publisher trajectory_pub = n.advertise<nav_msgs::Path>("Trajectory", 1000);
+
+    std::vector<geometry_msgs::PoseStamped> posesArr;
+    posesArr.reserve(1000);
+
 
     // Get initial image, undistort and rectify
     std::string Limgf = stereo_cam.imgStream.left_images[0];
@@ -264,7 +271,30 @@ void TrackPose(StereoCamera &stereo_cam)
             pose.orientation = ros_quat;
             poseStamped.header = header;
             poseStamped.pose = pose;
+
+            nav_msgs::Path trajectory;
+            trajectory.header = header;
+            posesArr.push_back(poseStamped);
+            trajectory.poses = posesArr;
+            //visualization_msgs::Marker trajectory;
+            //geometry_msgs::Vector3 scale;
+            //std_msgs::ColorRGBA color;
+            //color.r = 0;
+            //color.g = 255;
+            //color.b = 0;
+            //color.a = 1;
+
+            //scale.x = 1;
+            //scale.y = 1;
+            //scale.z = 1;
+            //trajectory.header = header;
+            //trajectory.type = trajectory.CUBE;
+            //trajectory.pose = pose;
+            //trajectory.scale = scale;
+            //trajectory.color = color;
+
             pose_pub.publish(poseStamped);
+            trajectory_pub.publish(trajectory);
         }
 
 
