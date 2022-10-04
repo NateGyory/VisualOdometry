@@ -75,17 +75,22 @@
 #include "stereoCamera.h"
 #include "tracking.h"
 #include "ros/ros.h"
+#include "utils.h"
 
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "DronePose");
 
-    StereoCamera stereo_cam;
+    //StereoCamera stereo_cam;
 
-    InitStereoCamera(stereo_cam);
+    //InitStereoCamera(stereo_cam);
 
-    TrackPose(stereo_cam);
+    // Read in and publish ground truth Path
+    std::vector<nav_msgs::Path> groundTruth;
+    utils::euroc::ParseGroundTruth(groundTruth);
+
+    //TrackPose(stereo_cam);
 
     return 0;
 }

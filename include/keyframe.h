@@ -1,4 +1,3 @@
-
 #ifndef KEY_FRAME_H
 #define KEY_FRAME_H
 
