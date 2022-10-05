@@ -4,13 +4,15 @@
 #include <fstream>
 
 #include "nav_msgs/Path.h"
+#include "std_msgs/Header.h"
 #include "rapidcsv.h"
+#include "ros/ros.h"
 
 namespace utils
 {
 namespace euroc
 {
-    void ParseGroundTruth(std::vector<nav_msgs::Path> &groundTruth);
+    void ParseGroundTruth(nav_msgs::Path &groundTruth);
 
 }; // -- euroc
 }; // -- utils

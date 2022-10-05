@@ -13,6 +13,7 @@
 #include <opencv2/core/eigen.hpp>
 #include <Eigen/Geometry>
 #include <ros/time.h>
+#include "utils.h"
 
 cv::Mat rotation(3, 3, CV_64F);
 cv::Point3f translation(0.0f, 0.0f, 0.0f);
@@ -116,8 +117,13 @@ void TrackPose(StereoCamera &stereo_cam)
     ros::NodeHandle n;
     ros::Time time;
 
+    nav_msgs::Path groundTruth;
+    utils::euroc::ParseGroundTruth(groundTruth);
+
     ros::Publisher pose_pub = n.advertise<geometry_msgs::PoseStamped>("Pose", 1000);
     ros::Publisher trajectory_pub = n.advertise<nav_msgs::Path>("Trajectory", 1000);
+    ros::Publisher ground_truth_pub = n.advertise<nav_msgs::Path>("GroundTruth", 10);
+
 
     std::vector<geometry_msgs::PoseStamped> posesArr;
     posesArr.reserve(1000);
@@ -145,6 +151,9 @@ void TrackPose(StereoCamera &stereo_cam)
 
     // Global T_Initial_Current
     cv::Mat T_Init_Current = cv::Mat::eye(4, 4, CV_64F);
+    T_Init_Current.at<double>(0,3) = -1.812689014911697;
+    T_Init_Current.at<double>(1,3) = -1.091240672110694;
+    T_Init_Current.at<double>(2,3) = -4.7839366705711122;
     int init_flag = 0;
 
     // Loop over images
@@ -232,7 +241,6 @@ void TrackPose(StereoCamera &stereo_cam)
             cv::Mat T_Prev_Cur = T_Cur_Prev.inv();
 
             T_Init_Current = T_Init_Current * T_Prev_Cur;
-            //cv::solvePnPRefineLM(points3D, points2D, stereo_cam.L_cam.K, stereo_cam.L_cam.D, rVec, tVec);
 
             // Create the Pose
             std_msgs::Header header;
@@ -295,6 +303,7 @@ void TrackPose(StereoCamera &stereo_cam)
 
             pose_pub.publish(poseStamped);
             trajectory_pub.publish(trajectory);
+            ground_truth_pub.publish(groundTruth);
         }
 
 
