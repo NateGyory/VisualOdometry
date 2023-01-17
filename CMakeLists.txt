@@ -17,7 +17,5 @@ find_package(catkin REQUIRED COMPONENTS
 file(GLOB_RECURSE SRCS CONFIGURE_DEPENDS "src/*.cpp")
 
 add_executable(stereoSLAM ${SRCS})
-#target_link_libraries(stereoSLAM PRIVATE ${OpenCV_LIBS} ${Pangolin_LIBRARIES} "/home/nate/Build/Pangolin-0.6/install/lib/libpangolin.so", ${catkin_LIBRARIES})
 target_link_libraries(stereoSLAM PRIVATE ${OpenCV_LIBS} ${EIGEN3_LIBRARIES} ${catkin_LIBRARIES})
-#target_include_directories(stereoSLAM PRIVATE ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/include "/home/nate/Build/Pangolin-0.6/install/include" ${catkin_INCLUDE_DIRS})
 target_include_directories(stereoSLAM PRIVATE ${OpenCV_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/include ${catkin_INCLUDE_DIRS})
