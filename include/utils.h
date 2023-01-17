@@ -13,6 +13,7 @@ namespace utils
 namespace euroc
 {
     void ParseGroundTruth(nav_msgs::Path &groundTruth);
+    void ParseImuPath(nav_msgs::Path &imuPath);
 
 }; // -- euroc
 }; // -- utils

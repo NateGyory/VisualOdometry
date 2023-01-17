@@ -117,12 +117,14 @@ void TrackPose(StereoCamera &stereo_cam)
     ros::NodeHandle n;
     ros::Time time;
 
-    nav_msgs::Path groundTruth;
+    nav_msgs::Path groundTruth, imuPath;
     utils::euroc::ParseGroundTruth(groundTruth);
+    utils::euroc::ParseImuPath(imuPath);
 
     ros::Publisher pose_pub = n.advertise<geometry_msgs::PoseStamped>("Pose", 1000);
     ros::Publisher trajectory_pub = n.advertise<nav_msgs::Path>("Trajectory", 1000);
     ros::Publisher ground_truth_pub = n.advertise<nav_msgs::Path>("GroundTruth", 10);
+    ros::Publisher imu_path_pub = n.advertise<nav_msgs::Path>("ImuPath", 10);
 
 
     std::vector<geometry_msgs::PoseStamped> posesArr;
@@ -229,7 +231,12 @@ void TrackPose(StereoCamera &stereo_cam)
         cv::Mat rVec, tVec;
         if (points2D.size() >= 6 && points3D.size() >= 6)
         {
-            cv::solvePnPRansac(points3D, points2D, stereo_cam.L_cam.P.rowRange(0,3).colRange(0,3), cv::noArray(), rVec, tVec);
+            // TODO Nate: finish the tutorial and play with the numbers
+            int iterationsCount = 500;        // number of Ransac iterations.
+            float reprojectionError = 2.0;    // maximum allowed distance to consider it an inlier.
+            float confidence = 0.99;          // ransac successful confidence.
+            cv::Mat inliers;
+            cv::solvePnPRansac(points3D, points2D, stereo_cam.L_cam.P.rowRange(0,3).colRange(0,3), cv::noArray(), rVec, tVec, false, iterationsCount, reprojectionError, confidence, inliers);
 
             cv::Mat R;
             cv::Rodrigues(rVec, R);
@@ -304,6 +311,7 @@ void TrackPose(StereoCamera &stereo_cam)
             pose_pub.publish(poseStamped);
             trajectory_pub.publish(trajectory);
             ground_truth_pub.publish(groundTruth);
+            imu_path_pub.publish(imuPath);
         }
 
 
