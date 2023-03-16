@@ -178,7 +178,11 @@ void TrackPose(StereoCamera &stereo_cam) {
       points2D.emplace_back(x_current, y_current);
     }
 
-    cv::imshow("Current frame", current_imgL);
+    // cv::imshow("Current frame", current_imgL);
+    cv::Mat img_match;
+    drawMatches(current_imgL, current_keypoints, prev_imgL, prev_keypoints,
+                knnMatches, img_match);
+    imshow("KNN Matches", img_match);
     cv::waitKey(1);
 
     prev_imgL.release();
@@ -189,6 +193,7 @@ void TrackPose(StereoCamera &stereo_cam) {
     prev_imgR = current_imgR;
     prev_keypoints = current_keypoints;
     prev_descriptors = current_descriptors;
+
     current_imgL.release();
     current_imgR.release();
     current_keypoints.clear();
@@ -206,10 +211,12 @@ void TrackPose(StereoCamera &stereo_cam) {
           2.0; // maximum allowed distance to consider it an inlier.
       float confidence = 0.99; // ransac successful confidence.
       cv::Mat inliers;
-      cv::solvePnPRansac(points3D, points2D,
-                         stereo_cam.L_cam.P.rowRange(0, 3).colRange(0, 3),
-                         cv::noArray(), rVec, tVec, false, iterationsCount,
-                         reprojectionError, confidence, inliers);
+      cv::solvePnPRansac(points3D, points2D, stereo_cam.L_cam.P.rowRange(0,3).colRange(0,3), cv::noArray(), rVec, tVec);
+
+      // cv::solvePnPRansac(points3D, points2D,
+      //                    stereo_cam.L_cam.P.rowRange(0, 3).colRange(0, 3),
+      //                    cv::noArray(), rVec, tVec, false, iterationsCount,
+      //                    reprojectionError, confidence, inliers);
 
       cv::Mat R;
       cv::Rodrigues(rVec, R);
@@ -290,12 +297,6 @@ void TrackPose(StereoCamera &stereo_cam) {
     // Apply the rotation and translation to the global pose
 
     // Display the matches between the previous frame and current frame
-    //        cv::Mat img_match;
-    //        drawMatches (current_imgL, current_keypoints, prev_imgL,
-    //        prev_keypoints, knnMatches, img_match );
-    //
-    //        imshow ( "KNN Matches", img_match );
-    //        cv::waitKey(0);
 
     // Set prev data to current to process next frame
 
