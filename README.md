@@ -8,9 +8,9 @@ https://user-images.githubusercontent.com/45575958/231634305-64fa44d4-291a-445a-
 
 
 ## Details
-This codebase implements a visual odometry system for a drone with stereo camera visual sensor system. The images are from MAV0 in the EuRoC dataset. The steps to compute the visual odometry are
+This codebase implements a visual odometry system for a drone with stereo cameras. The images are from MAV0 sequence in the EuRoC dataset. The steps to compute the visual odometry of the drone are:
 
-1. Undistort & rectify stereo image pairs using the lens interisic and extrinsic properties
+1. Undistort & rectify stereo image pairs using the lens interisic and extrinsic parameters
 2. Compute the disparity image
 3. Find ORB feature matches between the current and previous frame
 4. Solve for the Rotation and Translation between frames using the PnP algorithm
